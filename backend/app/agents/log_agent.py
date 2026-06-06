@@ -22,14 +22,21 @@ class LogAgent(BaseAgent):
 
                 text = content["content"]
 
-                if "ERROR" in text:
+                errors = []
 
-                    findings.append(
-                        {
-                            "file": log_file,
-                            "error_detected": True
-                        }
-                    )
+                for line in text.splitlines():
+
+                    if "ERROR" in line:
+                        errors.append(line)
+
+                findings.append(
+                    {
+                        "file": log_file,
+                        "error_detected": len(errors) > 0,
+                        "error_count": len(errors),
+                        "errors": errors
+                    }
+                )
 
         state["logs"] = findings
 
