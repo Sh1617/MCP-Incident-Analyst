@@ -19,7 +19,12 @@ async def main():
         }
     )
 
+    print("\n")
+    print("=" * 80)
+    print("FINAL REPORT")
+    print("=" * 80)
     print(result["final_report"])
+    print("=" * 80)
 
 
 asyncio.run(main())
