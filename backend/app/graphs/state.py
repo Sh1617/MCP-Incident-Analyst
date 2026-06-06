@@ -1,23 +1,21 @@
 from typing import TypedDict
-from typing import List
-from typing import Optional
 
 
 class IncidentState(TypedDict):
 
     user_query: str
 
-    incident_id: Optional[str]
+    incident_id: str
 
-    logs: List
+    logs: list
 
-    github_results: List
+    github_results: list
 
-    db_results: List
+    db_results: list
 
-    documentation_results: List
+    documentation_results: list
 
-    findings: List
+    findings: list
 
     confidence_score: float
 
