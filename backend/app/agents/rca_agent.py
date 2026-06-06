@@ -12,20 +12,33 @@ class RCAAgent(BaseAgent):
     async def execute(self, state):
 
         prompt = f"""
-You are an SRE Root Cause Analysis Agent.
+You are an expert Site Reliability Engineer.
+
+Analyze the incident and generate a Root Cause Analysis.
 
 User Query:
-{state['user_query']}
+{state["user_query"]}
 
-Evidence:
-{state['findings']}
+Log Findings:
+{state["logs"]}
+
+Historical Incident Data:
+{state["db_results"]}
+
+Documentation Findings:
+{state["documentation_results"]}
 
 Generate:
 
 1. Executive Summary
-2. Root Cause
-3. Impact
-4. Remediation Steps
+2. Timeline
+3. Evidence Collected
+4. Root Cause
+5. Contributing Factors
+6. Impact Analysis
+7. Remediation Steps
+8. Prevention Recommendations
+9. Confidence Score
 """
 
         response = self.llm.invoke(prompt)

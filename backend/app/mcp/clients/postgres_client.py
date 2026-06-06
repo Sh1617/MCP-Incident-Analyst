@@ -1,37 +1,52 @@
-from typing import Any
+import psycopg
+
+from backend.app.core.database_config import (
+    POSTGRES_HOST,
+    POSTGRES_PORT,
+    POSTGRES_DB,
+    POSTGRES_USER,
+    POSTGRES_PASSWORD,
+)
 
 
 class PostgresMCPClient:
 
     def __init__(self):
-        self.server_name = "postgres-mcp"
+        self.connection_string = (
+            f"host={POSTGRES_HOST} "
+            f"port={POSTGRES_PORT} "
+            f"dbname={POSTGRES_DB} "
+            f"user={POSTGRES_USER} "
+            f"password={POSTGRES_PASSWORD}"
+        )
 
-    async def query(
-        self,
-        sql: str
-    ) -> Any:
-
-        """
-        Execute query through PostgreSQL MCP Server.
-        """
-
-        # MCP implementation added later
-
-        return {
-            "status": "success",
-            "query": sql,
-            "rows": []
-        }
+    def get_connection(self):
+        return psycopg.connect(
+            self.connection_string
+        )
 
     async def get_incident_history(
         self,
         incident_id: str
     ):
 
-        sql = f"""
-        SELECT *
-        FROM incidents
-        WHERE incident_id = '{incident_id}'
-        """
+        with self.get_connection() as conn:
 
-        return await self.query(sql)
+            with conn.cursor() as cur:
+
+                cur.execute(
+                    """
+                    SELECT
+                        incident_id,
+                        title,
+                        description,
+                        status
+                    FROM incidents
+                    WHERE incident_id = %s
+                    """,
+                    (incident_id,)
+                )
+
+                rows = cur.fetchall()
+
+        return rows

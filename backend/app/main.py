@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 
-from app.api.health import router as health_router
-from app.core.config import settings
-from app.core.logging import setup_logging
+from backend.app.api.health import router as health_router
+from backend.app.api.investigate import router as investigate_router
+
+from backend.app.core.config import settings
+from backend.app.core.logging import setup_logging
 
 logger = setup_logging()
 
@@ -12,7 +14,9 @@ app = FastAPI(
     description="AI-Powered Incident Investigation Platform"
 )
 
+# Routers
 app.include_router(health_router)
+app.include_router(investigate_router)
 
 
 @app.on_event("startup")
