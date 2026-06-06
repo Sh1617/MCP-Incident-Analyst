@@ -1,6 +1,6 @@
-from app.mcp.clients.postgres_client import PostgresMCPClient
-from app.mcp.clients.github_client import GitHubMCPClient
-from app.mcp.clients.filesystem_client import FilesystemMCPClient
+from backend.app.mcp.clients.postgres_client import PostgresMCPClient
+from backend.app.mcp.clients.github_client import GitHubMCPClient
+from backend.app.mcp.clients.filesystem_client import FilesystemMCPClient
 
 
 class MCPManager:

@@ -6,17 +6,14 @@ class FilesystemMCPClient:
     def __init__(self):
         self.server_name = "filesystem-mcp"
 
-    async def read_file(
-        self,
-        file_path: str
-    ):
+    async def read_file(self, file_path: str):
 
         path = Path(file_path)
 
         if not path.exists():
             return {
                 "status": "error",
-                "message": "File not found"
+                "message": f"{file_path} not found"
             }
 
         return {
@@ -28,10 +25,17 @@ class FilesystemMCPClient:
 
     async def search_logs(
         self,
-        directory: str
+        directory: str = "logs"
     ):
 
-        return {
-            "status": "success",
-            "directory": directory
-        }
+        log_files = []
+
+        path = Path(directory)
+
+        if not path.exists():
+            return []
+
+        for file in path.glob("*.log"):
+            log_files.append(str(file))
+
+        return log_files
