@@ -12,6 +12,7 @@ from backend.app.core.database_config import (
 class PostgresMCPClient:
 
     def __init__(self):
+
         self.connection_string = (
             f"host={POSTGRES_HOST} "
             f"port={POSTGRES_PORT} "
@@ -21,6 +22,7 @@ class PostgresMCPClient:
         )
 
     def get_connection(self):
+
         return psycopg.connect(
             self.connection_string
         )
@@ -50,3 +52,22 @@ class PostgresMCPClient:
                 rows = cur.fetchall()
 
         return rows
+
+    async def execute(
+        self,
+        query,
+        params=None
+    ):
+
+        with self.get_connection() as conn:
+
+            with conn.cursor() as cur:
+
+                cur.execute(
+                    query,
+                    params
+                )
+
+            conn.commit()
+
+        return True

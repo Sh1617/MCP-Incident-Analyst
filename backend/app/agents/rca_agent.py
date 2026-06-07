@@ -3,6 +3,9 @@ from backend.app.llm.factory import LLMFactory
 from backend.app.core.metrics import AgentTimer
 from backend.app.core.logger import get_logger
 from backend.app.core.tracing import tracer
+from backend.app.repositories.investigation_repository import (
+    InvestigationRepository
+)
 
 logger = get_logger(__name__)
 
@@ -109,6 +112,17 @@ Keep the response under 300 words.
             state["agent_metrics"][
                 self.name
             ] = timer.stop()
+
+            repo = InvestigationRepository()
+
+            await repo.save_report(
+                state["final_report"],
+                state["confidence_score"]
+            )
+
+            logger.info(
+                "RCA Report Saved"
+            )
 
             logger.info(
                 f"RCA Agent Finished | "
