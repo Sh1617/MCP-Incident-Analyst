@@ -2,7 +2,7 @@ from backend.app.agents.base_agent import BaseAgent
 from backend.app.mcp.manager import mcp_manager
 from backend.app.core.metrics import AgentTimer
 from backend.app.core.logger import get_logger
-
+from backend.app.core.tracing import tracer
 
 logger = get_logger(__name__)
 
@@ -13,40 +13,44 @@ class GitHubAgent(BaseAgent):
 
     async def execute(self, state):
 
-        timer = AgentTimer()
-        timer.start()
+        with tracer.start_as_current_span(
+            "github_agent_execution"
+        ):
 
-        logger.info(
-            "GitHub Agent Started"
-        )
+            timer = AgentTimer()
+            timer.start()
 
-        commits = await (
-            mcp_manager.github.search_recent_commits(
-                limit=5
+            logger.info(
+                "GitHub Agent Started"
             )
-        )
 
-        state["github_results"] = commits
+            commits = await (
+                mcp_manager.github.search_recent_commits(
+                    limit=5
+                )
+            )
 
-        state["findings"].append(
-            {
-                "agent": self.name,
-                "recent_commits": commits
-            }
-        )
+            state["github_results"] = commits
 
-        if "agent_metrics" not in state:
+            state["findings"].append(
+                {
+                    "agent": self.name,
+                    "recent_commits": commits
+                }
+            )
 
-            state["agent_metrics"] = {}
+            if "agent_metrics" not in state:
 
-        state["agent_metrics"][
-            self.name
-        ] = timer.stop()
+                state["agent_metrics"] = {}
 
-        logger.info(
-            f"GitHub Agent Finished | "
-            f"Commits Found={len(commits)} | "
-            f"Execution Time={state['agent_metrics'][self.name]}s"
-        )
+            state["agent_metrics"][
+                self.name
+            ] = timer.stop()
 
-        return state
+            logger.info(
+                f"GitHub Agent Finished | "
+                f"Commits Found={len(commits)} | "
+                f"Execution Time={state['agent_metrics'][self.name]}s"
+            )
+
+            return state

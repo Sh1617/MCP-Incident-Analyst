@@ -2,7 +2,7 @@ from backend.app.agents.base_agent import BaseAgent
 from backend.app.mcp.manager import mcp_manager
 from backend.app.core.metrics import AgentTimer
 from backend.app.core.logger import get_logger
-
+from backend.app.core.tracing import tracer
 
 logger = get_logger(__name__)
 
@@ -13,71 +13,77 @@ class LogAgent(BaseAgent):
 
     async def execute(self, state):
 
-        timer = AgentTimer()
-        timer.start()
+        with tracer.start_as_current_span(
+            "log_agent_execution"
+        ):
 
-        logger.info(
-            "Log Agent Started"
-        )
+        # existing code here
 
-        logs = await (
-            mcp_manager.filesystem.search_logs()
-        )
+            timer = AgentTimer()
+            timer.start()
 
-        findings = []
-
-        for log_file in logs:
-
-            content = await (
-                mcp_manager.filesystem.read_file(
-                    log_file
-                )
+            logger.info(
+                "Log Agent Started"
             )
 
-            if content["status"] == "success":
+            logs = await (
+                mcp_manager.filesystem.search_logs()
+            )
 
-                text = content["content"]
+            findings = []
 
-                errors = []
+            for log_file in logs:
 
-                for line in text.splitlines():
-
-                    if "ERROR" in line:
-
-                        errors.append(
-                            line
-                        )
-
-                findings.append(
-                    {
-                        "file": log_file,
-                        "error_detected": len(errors) > 0,
-                        "error_count": len(errors),
-                        "errors": errors
-                    }
+                content = await (
+                    mcp_manager.filesystem.read_file(
+                        log_file
+                    )
                 )
 
-        state["logs"] = findings
+                if content["status"] == "success":
 
-        state["findings"].append(
-            {
-                "agent": self.name,
-                "results": findings
-            }
-        )
+                    text = content["content"]
 
-        if "agent_metrics" not in state:
+                    errors = []
 
-            state["agent_metrics"] = {}
+                    for line in text.splitlines():
 
-        state["agent_metrics"][
-            self.name
-        ] = timer.stop()
+                        if "ERROR" in line:
 
-        logger.info(
-            f"Log Agent Finished | "
-            f"Files Processed={len(findings)} | "
-            f"Execution Time={state['agent_metrics'][self.name]}s"
-        )
+                            errors.append(
+                                line
+                            )
 
-        return state
+                    findings.append(
+                        {
+                            "file": log_file,
+                            "error_detected": len(errors) > 0,
+                            "error_count": len(errors),
+                            "errors": errors
+                        }
+                    )
+
+            state["logs"] = findings
+
+            state["findings"].append(
+                {
+                    "agent": self.name,
+                    "results": findings
+                }
+            )
+
+            if "agent_metrics" not in state:
+
+                state["agent_metrics"] = {}
+
+            state["agent_metrics"][
+                self.name
+            ] = timer.stop()
+
+            logger.info(
+                f"Log Agent Finished | "
+                f"Files Processed={len(findings)} | "
+                f"Execution Time={state['agent_metrics'][self.name]}s"
+            )
+
+            return state

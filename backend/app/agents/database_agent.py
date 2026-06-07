@@ -1,35 +1,36 @@
 from backend.app.agents.base_agent import BaseAgent
 from backend.app.mcp.manager import mcp_manager
-
+from backend.app.core.tracing import tracer
 
 class DatabaseAgent(BaseAgent):
 
     name = "database_agent"
 
-    async def execute(
-        self,
-        state
-    ):
+    async def execute(self, state):
 
-        incident_id = state.get(
-            "incident_id",
-            "INC-001"
-        )
+        with tracer.start_as_current_span(
+            "database_agent_execution"
+        ):
 
-        result = await (
-            mcp_manager.postgres
-            .get_incident_history(
-                incident_id
+            incident_id = state.get(
+                "incident_id",
+                "INC-001"
             )
-        )
 
-        state["db_results"] = result
+            result = await (
+                mcp_manager.postgres
+                .get_incident_history(
+                    incident_id
+                )
+            )
 
-        state["findings"].append(
-            {
-                "agent": self.name,
-                "incident_history": result
-            }
-        )
+            state["db_results"] = result
 
-        return state
+            state["findings"].append(
+                {
+                    "agent": self.name,
+                    "incident_history": result
+                }
+            )
+
+            return state

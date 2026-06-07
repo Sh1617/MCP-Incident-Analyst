@@ -3,7 +3,7 @@ from backend.app.agents.base_agent import BaseAgent
 from backend.app.vectorstore.retriever import (
     search_runbooks
 )
-
+from backend.app.core.tracing import tracer
 
 class DocumentationAgent(BaseAgent):
 
@@ -11,17 +11,21 @@ class DocumentationAgent(BaseAgent):
 
     async def execute(self, state):
 
-        docs = search_runbooks(
-            state["user_query"]
-        )
+        with tracer.start_as_current_span(
+            "documentation_agent_execution"
+        ):
 
-        state["documentation_results"] = docs
+            docs = search_runbooks(
+                state["user_query"]
+            )
 
-        state["findings"].append(
-            {
-                "agent": self.name,
-                "results": docs
-            }
-        )
+            state["documentation_results"] = docs
 
-        return state
+            state["findings"].append(
+                {
+                    "agent": self.name,
+                    "results": docs
+                }
+            )
+
+            return state
