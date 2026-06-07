@@ -1,6 +1,10 @@
 from backend.app.agents.base_agent import BaseAgent
 from backend.app.mcp.manager import mcp_manager
 from backend.app.core.metrics import AgentTimer
+from backend.app.core.logger import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class LogAgent(BaseAgent):
@@ -12,14 +16,22 @@ class LogAgent(BaseAgent):
         timer = AgentTimer()
         timer.start()
 
-        logs = await mcp_manager.filesystem.search_logs()
+        logger.info(
+            "Log Agent Started"
+        )
+
+        logs = await (
+            mcp_manager.filesystem.search_logs()
+        )
 
         findings = []
 
         for log_file in logs:
 
-            content = await mcp_manager.filesystem.read_file(
-                log_file
+            content = await (
+                mcp_manager.filesystem.read_file(
+                    log_file
+                )
             )
 
             if content["status"] == "success":
@@ -31,7 +43,10 @@ class LogAgent(BaseAgent):
                 for line in text.splitlines():
 
                     if "ERROR" in line:
-                        errors.append(line)
+
+                        errors.append(
+                            line
+                        )
 
                 findings.append(
                     {
@@ -52,10 +67,17 @@ class LogAgent(BaseAgent):
         )
 
         if "agent_metrics" not in state:
+
             state["agent_metrics"] = {}
 
         state["agent_metrics"][
             self.name
         ] = timer.stop()
+
+        logger.info(
+            f"Log Agent Finished | "
+            f"Files Processed={len(findings)} | "
+            f"Execution Time={state['agent_metrics'][self.name]}s"
+        )
 
         return state

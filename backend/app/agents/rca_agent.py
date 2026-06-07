@@ -1,6 +1,10 @@
 from backend.app.agents.base_agent import BaseAgent
 from backend.app.llm.factory import LLMFactory
 from backend.app.core.metrics import AgentTimer
+from backend.app.core.logger import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class RCAAgent(BaseAgent):
@@ -16,7 +20,9 @@ class RCAAgent(BaseAgent):
         timer = AgentTimer()
         timer.start()
 
-        print("RCA Agent Started")
+        logger.info(
+            "RCA Agent Started"
+        )
 
         logs = str(
             state.get("logs", [])
@@ -74,16 +80,15 @@ Generate:
 Keep the response under 300 words.
 """
 
-        print(
-            "Prompt Length:",
-            len(prompt)
+        logger.info(
+            f"RCA Prompt Length={len(prompt)}"
         )
 
         response = self.llm.invoke(
             prompt
         )
 
-        print(
+        logger.info(
             "LLM Response Received"
         )
 
@@ -101,8 +106,9 @@ Keep the response under 300 words.
             self.name
         ] = timer.stop()
 
-        print(
-            "RCA Agent Finished"
+        logger.info(
+            f"RCA Agent Finished | "
+            f"Execution Time={state['agent_metrics'][self.name]}s"
         )
 
         return state

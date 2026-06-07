@@ -1,6 +1,10 @@
 from backend.app.agents.base_agent import BaseAgent
 from backend.app.mcp.manager import mcp_manager
 from backend.app.core.metrics import AgentTimer
+from backend.app.core.logger import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class GitHubAgent(BaseAgent):
@@ -12,7 +16,9 @@ class GitHubAgent(BaseAgent):
         timer = AgentTimer()
         timer.start()
 
-        print("GitHub Agent Started")
+        logger.info(
+            "GitHub Agent Started"
+        )
 
         commits = await (
             mcp_manager.github.search_recent_commits(
@@ -30,12 +36,17 @@ class GitHubAgent(BaseAgent):
         )
 
         if "agent_metrics" not in state:
+
             state["agent_metrics"] = {}
 
         state["agent_metrics"][
             self.name
         ] = timer.stop()
 
-        print("GitHub Agent Executed")
+        logger.info(
+            f"GitHub Agent Finished | "
+            f"Commits Found={len(commits)} | "
+            f"Execution Time={state['agent_metrics'][self.name]}s"
+        )
 
         return state
