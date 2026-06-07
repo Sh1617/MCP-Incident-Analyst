@@ -1,29 +1,39 @@
-from typing import Any
+from git import Repo
 
 
 class GitHubMCPClient:
 
     def __init__(self):
-        self.server_name = "github-mcp"
 
-    async def search_commits(
+        self.repo = Repo(".")
+
+    async def search_recent_commits(
         self,
-        query: str
-    ) -> Any:
+        limit: int = 5
+    ):
 
-        return {
-            "status": "success",
-            "query": query,
-            "commits": []
-        }
+        commits = []
 
-    async def search_pull_requests(
-        self,
-        query: str
-    ) -> Any:
+        try:
 
-        return {
-            "status": "success",
-            "query": query,
-            "pull_requests": []
-        }
+            for commit in self.repo.iter_commits(
+                max_count=limit
+            ):
+
+                commits.append(
+                    {
+                        "hash": commit.hexsha[:8],
+                        "message": commit.message.strip(),
+                        "author": str(commit.author),
+                    }
+                )
+
+        except Exception as e:
+
+            commits.append(
+                {
+                    "error": str(e)
+                }
+            )
+
+        return commits

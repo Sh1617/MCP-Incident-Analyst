@@ -8,6 +8,7 @@ class RCAAgent(BaseAgent):
     name = "rca_agent"
 
     def __init__(self):
+
         self.llm = LLMFactory.get_llm()
 
     async def execute(self, state):
@@ -19,30 +20,33 @@ class RCAAgent(BaseAgent):
 
         logs = str(
             state.get("logs", [])
-        )[:500]
+        )[:150]
 
         db_results = str(
             state.get("db_results", [])
-        )[:300]
+        )[:100]
 
         docs = str(
             state.get(
                 "documentation_results",
                 []
             )
-        )[:500]
+        )[:150]
 
-        github = str(
-            state.get(
-                "github_results",
-                []
-            )
-        )[:300]
+        commit_summary = "\n".join(
+            [
+                commit["message"]
+                for commit in state.get(
+                    "github_results",
+                    []
+                )[:3]
+            ]
+        )
 
         prompt = f"""
-You are a Site Reliability Engineer.
+You are a Senior Site Reliability Engineer.
 
-Analyze the evidence and generate a concise Root Cause Analysis.
+Analyze the incident and generate a concise RCA.
 
 User Query:
 {state.get("user_query")}
@@ -56,16 +60,18 @@ Historical Incidents:
 Documentation:
 {docs}
 
-GitHub Changes:
-{github}
+Recent Code Changes:
+{commit_summary}
 
-Provide:
+Generate:
 
 1. Executive Summary
 2. Root Cause
-3. Impact
+3. Impact Analysis
 4. Remediation Steps
 5. Confidence Score
+
+Keep the response under 300 words.
 """
 
         print(
@@ -88,6 +94,7 @@ Provide:
         state["confidence_score"] = 0.85
 
         if "agent_metrics" not in state:
+
             state["agent_metrics"] = {}
 
         state["agent_metrics"][
