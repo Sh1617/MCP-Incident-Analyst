@@ -86,3 +86,45 @@ class InvestigationRepository:
             "confidence_score": row[3],
             "created_at": str(row[4])
         }
+    
+    async def get_investigations(self):
+
+        query = """
+        SELECT
+            investigation_id,
+            incident_id,
+            user_query,
+            status,
+            confidence_score,
+            started_at
+        FROM investigations
+        ORDER BY id DESC
+        """
+
+        with (
+            mcp_manager.postgres.get_connection()
+            as conn
+        ):
+
+            with conn.cursor() as cur:
+
+                cur.execute(query)
+
+                rows = cur.fetchall()
+
+        investigations = []
+
+        for row in rows:
+
+            investigations.append(
+                {
+                    "investigation_id": row[0],
+                    "incident_id": row[1],
+                    "user_query": row[2],
+                    "status": row[3],
+                    "confidence_score": row[4],
+                    "started_at": str(row[5])
+                }
+            )
+
+        return investigations

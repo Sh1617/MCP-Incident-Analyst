@@ -15,6 +15,12 @@ from backend.app.api.routes.reports import (
 from backend.app.core.config import settings
 from backend.app.core.logging import setup_logging
 
+from backend.app.api.investigations import (
+    router as investigations_router
+)
+from backend.app.api.metrics import (
+    router as metrics_router
+)
 
 logger = setup_logging()
 
@@ -35,6 +41,14 @@ app.include_router(
 
 app.include_router(
     reports_router
+)
+
+app.include_router(
+    investigations_router
+)
+
+app.include_router(
+    metrics_router
 )
 
 

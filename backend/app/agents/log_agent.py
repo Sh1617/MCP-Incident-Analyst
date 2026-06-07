@@ -3,6 +3,9 @@ from backend.app.mcp.manager import mcp_manager
 from backend.app.core.metrics import AgentTimer
 from backend.app.core.logger import get_logger
 from backend.app.core.tracing import tracer
+from backend.app.api.metrics import (
+    agent_metrics
+)
 
 logger = get_logger(__name__)
 
@@ -48,7 +51,18 @@ class LogAgent(BaseAgent):
 
                     for line in text.splitlines():
 
-                        if "ERROR" in line:
+                        keywords = [
+                            "ERROR",
+                            "CRITICAL",
+                            "EXCEPTION",
+                            "TIMEOUT",
+                            "FAILED"
+                        ]
+
+                        if any(
+                            keyword in line.upper()
+                            for keyword in keywords
+                        ):
 
                             errors.append(
                                 line
@@ -84,6 +98,13 @@ class LogAgent(BaseAgent):
                 f"Log Agent Finished | "
                 f"Files Processed={len(findings)} | "
                 f"Execution Time={state['agent_metrics'][self.name]}s"
+            )
+
+            agent_metrics.update(
+                state.get(
+                    "agent_metrics",
+                    {}
+                )
             )
 
             return state

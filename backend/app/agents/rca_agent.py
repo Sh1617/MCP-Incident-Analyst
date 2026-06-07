@@ -6,6 +6,9 @@ from backend.app.core.tracing import tracer
 from backend.app.repositories.investigation_repository import (
     InvestigationRepository
 )
+from backend.app.api.metrics import (
+    agent_metrics
+)
 
 logger = get_logger(__name__)
 
@@ -33,18 +36,18 @@ class RCAAgent(BaseAgent):
 
             logs = str(
                 state.get("logs", [])
-            )[:150]
+            )[:300]
 
             db_results = str(
                 state.get("db_results", [])
-            )[:100]
+            )[:200]
 
             docs = str(
                 state.get(
                     "documentation_results",
                     []
                 )
-            )[:150]
+            )[:300]
 
             commit_summary = "\n".join(
                 [
@@ -59,10 +62,19 @@ class RCAAgent(BaseAgent):
             prompt = f"""
 You are a Senior Site Reliability Engineer.
 
-Analyze the incident and generate a concise RCA.
+IMPORTANT RULES:
+
+1. Use ONLY the supplied evidence.
+2. Do NOT invent outages.
+3. Do NOT assume financial loss.
+4. Do NOT assume customer impact unless evidence exists.
+5. If evidence is insufficient, state:
+   "Insufficient evidence to determine root cause."
 
 User Query:
 {state.get("user_query")}
+
+Evidence:
 
 Logs:
 {logs}
@@ -76,15 +88,21 @@ Documentation:
 Recent Code Changes:
 {commit_summary}
 
-Generate:
+Generate the following sections:
 
-1. Executive Summary
-2. Root Cause
-3. Impact Analysis
-4. Remediation Steps
-5. Confidence Score
+Executive Summary
 
-Keep the response under 300 words.
+Evidence Collected
+
+Root Cause
+
+Impact Analysis
+
+Remediation Steps
+
+Confidence Score
+
+Keep the response under 250 words.
 """
 
             logger.info(
@@ -103,7 +121,21 @@ Keep the response under 300 words.
                 response.content
             )
 
-            state["confidence_score"] = 0.85
+            confidence = 0.50
+
+            if state.get("logs"):
+                confidence += 0.20
+
+            if state.get("db_results"):
+                confidence += 0.15
+
+            if state.get("github_results"):
+                confidence += 0.15
+
+            state["confidence_score"] = min(
+                confidence,
+                1.0
+            )
 
             if "agent_metrics" not in state:
 
@@ -125,8 +157,19 @@ Keep the response under 300 words.
             )
 
             logger.info(
+                f"Confidence Score={state['confidence_score']}"
+            )
+
+            logger.info(
                 f"RCA Agent Finished | "
                 f"Execution Time={state['agent_metrics'][self.name]}s"
+            )
+
+            agent_metrics.update(
+                state.get(
+                    "agent_metrics",
+                    {}
+                )
             )
 
             return state

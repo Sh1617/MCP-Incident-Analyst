@@ -3,6 +3,9 @@ from backend.app.mcp.manager import mcp_manager
 from backend.app.core.metrics import AgentTimer
 from backend.app.core.logger import get_logger
 from backend.app.core.tracing import tracer
+from backend.app.api.metrics import (
+    agent_metrics
+)
 
 logger = get_logger(__name__)
 
@@ -51,6 +54,13 @@ class GitHubAgent(BaseAgent):
                 f"GitHub Agent Finished | "
                 f"Commits Found={len(commits)} | "
                 f"Execution Time={state['agent_metrics'][self.name]}s"
+            )
+
+            agent_metrics.update(
+                state.get(
+                    "agent_metrics",
+                    {}
+                )
             )
 
             return state
