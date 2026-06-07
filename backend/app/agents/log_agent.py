@@ -1,5 +1,6 @@
 from backend.app.agents.base_agent import BaseAgent
 from backend.app.mcp.manager import mcp_manager
+from backend.app.core.metrics import AgentTimer
 
 
 class LogAgent(BaseAgent):
@@ -7,6 +8,9 @@ class LogAgent(BaseAgent):
     name = "log_agent"
 
     async def execute(self, state):
+
+        timer = AgentTimer()
+        timer.start()
 
         logs = await mcp_manager.filesystem.search_logs()
 
@@ -46,5 +50,12 @@ class LogAgent(BaseAgent):
                 "results": findings
             }
         )
+
+        if "agent_metrics" not in state:
+            state["agent_metrics"] = {}
+
+        state["agent_metrics"][
+            self.name
+        ] = timer.stop()
 
         return state

@@ -1,5 +1,6 @@
 from backend.app.agents.base_agent import BaseAgent
 from backend.app.llm.factory import LLMFactory
+from backend.app.core.metrics import AgentTimer
 
 
 class RCAAgent(BaseAgent):
@@ -11,40 +12,90 @@ class RCAAgent(BaseAgent):
 
     async def execute(self, state):
 
-        prompt = f"""
-You are an expert Site Reliability Engineer.
+        timer = AgentTimer()
+        timer.start()
 
-Analyze the incident and generate a Root Cause Analysis.
+        print("RCA Agent Started")
+
+        logs = str(
+            state.get("logs", [])
+        )[:500]
+
+        db_results = str(
+            state.get("db_results", [])
+        )[:300]
+
+        docs = str(
+            state.get(
+                "documentation_results",
+                []
+            )
+        )[:500]
+
+        github = str(
+            state.get(
+                "github_results",
+                []
+            )
+        )[:300]
+
+        prompt = f"""
+You are a Site Reliability Engineer.
+
+Analyze the evidence and generate a concise Root Cause Analysis.
 
 User Query:
-{state["user_query"]}
+{state.get("user_query")}
 
-Log Findings:
-{state["logs"]}
+Logs:
+{logs}
 
-Historical Incident Data:
-{state["db_results"]}
+Historical Incidents:
+{db_results}
 
-Documentation Findings:
-{state["documentation_results"]}
+Documentation:
+{docs}
 
-Generate:
+GitHub Changes:
+{github}
+
+Provide:
 
 1. Executive Summary
-2. Timeline
-3. Evidence Collected
-4. Root Cause
-5. Contributing Factors
-6. Impact Analysis
-7. Remediation Steps
-8. Prevention Recommendations
-9. Confidence Score
+2. Root Cause
+3. Impact
+4. Remediation Steps
+5. Confidence Score
 """
 
-        response = self.llm.invoke(prompt)
+        print(
+            "Prompt Length:",
+            len(prompt)
+        )
 
-        state["final_report"] = response.content
+        response = self.llm.invoke(
+            prompt
+        )
 
-        state["confidence_score"] = 0.75
+        print(
+            "LLM Response Received"
+        )
+
+        state["final_report"] = (
+            response.content
+        )
+
+        state["confidence_score"] = 0.85
+
+        if "agent_metrics" not in state:
+            state["agent_metrics"] = {}
+
+        state["agent_metrics"][
+            self.name
+        ] = timer.stop()
+
+        print(
+            "RCA Agent Finished"
+        )
 
         return state

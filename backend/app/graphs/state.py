@@ -20,3 +20,5 @@ class IncidentState(TypedDict):
     confidence_score: float
 
     final_report: str
+
+    agent_metrics: dict
