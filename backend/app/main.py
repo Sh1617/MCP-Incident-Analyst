@@ -1,10 +1,20 @@
 from fastapi import FastAPI
 
-from backend.app.api.health import router as health_router
-from backend.app.api.investigate import router as investigate_router
+from backend.app.api.health import (
+    router as health_router
+)
+
+from backend.app.api.investigate import (
+    router as investigate_router
+)
+
+from backend.app.api.routes.reports import (
+    router as reports_router
+)
 
 from backend.app.core.config import settings
 from backend.app.core.logging import setup_logging
+
 
 logger = setup_logging()
 
@@ -15,17 +25,30 @@ app = FastAPI(
 )
 
 # Routers
-app.include_router(health_router)
-app.include_router(investigate_router)
+app.include_router(
+    health_router
+)
+
+app.include_router(
+    investigate_router
+)
+
+app.include_router(
+    reports_router
+)
 
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("MCP Incident Analyst started")
+
+    logger.info(
+        "MCP Incident Analyst started"
+    )
 
 
 @app.get("/")
 async def root():
+
     return {
         "application": settings.APP_NAME,
         "environment": settings.ENVIRONMENT,
